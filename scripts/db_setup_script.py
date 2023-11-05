@@ -1,7 +1,7 @@
 import sqlite3
 
 # Establish a connection to the SQLite database file (create one if it doesn't exist)
-conn = sqlite3.connect('./food_security_db.db')  # Replace 'food_security_db.db' with your desired database name
+conn = sqlite3.connect('./../db/food_security_db.db')  # Replace 'food_security_db.db' with your desired database name
 
 # Create a cursor object to execute SQL commands
 cursor = conn.cursor()
