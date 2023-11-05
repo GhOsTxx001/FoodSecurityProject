@@ -1,4 +1,5 @@
 import sqlite3
+from werkzeug.security import generate_password_hash
 
 def connect_db():
     return sqlite3.connect('./../db/food_security_db.db')
@@ -7,6 +8,7 @@ def close_db(conn):
     conn.close()
 
 def insert_user(username, password):
+    hashed_password = generate_password_hash(password)
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
