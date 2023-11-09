@@ -12,7 +12,6 @@ CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER PRIMARY KEY,
     username TEXT,
     password TEXT
-    -- Additional columns
 );
 '''
 
@@ -23,7 +22,7 @@ CREATE TABLE IF NOT EXISTS food_inventory (
     quantity INTEGER,
     location TEXT,
     expiry_date DATE
-    -- Additional columns
+
 );
 '''
 

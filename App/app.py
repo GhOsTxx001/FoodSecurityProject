@@ -1,10 +1,18 @@
 from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from food_distribution import get_food_data, calculate_distribution, send_notifications
+import sys
+sys.path.insert(0, '../scripts/')
+
+from food_distro import distribute_food_weekly
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 app = Flask(__name__)
+
+scheduler = BackgroundScheduler()
+scheduler.start()
+
+
 
 @app.route('/')
 def index():
@@ -59,5 +67,8 @@ scheduler.add_job(
     replace_existing=True)
 atexit.register(lambda: scheduler.shutdown())
 
+
+
 if __name__ == '__main__':
     app.run(debug=True)
+

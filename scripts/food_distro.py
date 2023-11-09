@@ -36,5 +36,4 @@ def distribute_food_weekly():
 
     close_db(conn)
 
-# Run the food distribution function
-distribute_food_weekly()
+
