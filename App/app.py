@@ -1,74 +1,61 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request
+import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
-import sys
-sys.path.insert(0, '../scripts/')
-
-from food_distro import distribute_food_weekly
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
 
 app = Flask(__name__)
 
-scheduler = BackgroundScheduler()
-scheduler.start()
-
-
-
-@app.route('/')
-def index():
-    return 'Welcome to the Food Security App'
-
-# AUTHENTICATION AND WHAT NOT
-# signing up
-
 @app.route('/signup', methods=['POST'])
 def signup():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    if username and password:
-        insert_user(username, password)
-        return jsonify({'message': 'User created successfully'}), 201
+    conn = sqlite3.connect('./food_security_db.db')
+    cursor = conn.cursor()
+    username = request.form['username']
+    password = request.form['password']
+    hashed_password = generate_password_hash(password)
+    cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
+    conn.commit()
+    conn.close()
+    return "User created successfully"
+
+@app.route('/login', methods=['POST'])
+def login():
+    conn = sqlite3.connect('./food_security_db.db')
+    cursor = conn.cursor()
+    username = request.form['username']
+    password = request.form['password']
+    cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
+    result = cursor.fetchone()
+    conn.close()
+    if result and check_password_hash(result[0], password):
+        return "Logged in successfully"
     else:
-        return jsonify({'message': 'Username and password are required'}), 400
+        return "Login failed. Invalid credentials."
 
-@app.route('/signin', methods=['POST'])
-def signin():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    if username and password:
-        user = get_user(username)
-        if user and check_password_hash(user['password'], password):
-            return jsonify({'message': 'Sign-in successful'}), 200
-        else:
-            return jsonify({'message': 'Invalid username or password'}), 401
-    else:
-        return jsonify({'message': 'Username and password are required'}), 400
+@app.route('/add_food_inventory', methods=['POST'])
+def add_food_inventory():
+    conn = sqlite3.connect('./food_security_db.db')
+    cursor = conn.cursor()
+    food_name = request.form['food_name']
+    quantity = request.form['quantity']
+    location = request.form['location']
+    expiry_date = request.form['expiry_date']
+    cursor.execute("INSERT INTO food_inventory (food_name, quantity, location, expiry_date) VALUES (?, ?, ?, ?)", (food_name, quantity, location, expiry_date))
+    conn.commit()
+    conn.close()
+    return "Food inventory added successfully"
 
-# FOOD DISTRIBUTION
-@app.route('/distribute_food', methods=['POST'])
-def distribute_food():
-    data = request.get_json()
-    location = data.get('location')
-    food_data = get_food_data(location)
-    distribution = calculate_distribution(food_data)
-    send_notifications(distribution)
-    return jsonify({'message': 'Food distribution successful'}), 200
+@app.route('/add_nutritional_info', methods=['POST'])
+def add_nutritional_info():
+    conn = sqlite3.connect('./food_security_db.db')
+    cursor = conn.cursor()
+    food_id = request.form['food_id']
+    calories = request.form['calories']
+    protein = request.form['protein']
+    carbs = request.form['carbs']
+    fat = request.form['fat']
+    cursor.execute("INSERT INTO nutritional_info (food_id, calories, protein, carbs, fat) VALUES (?, ?, ?, ?, ?)", (food_id, calories, protein, carbs, fat))
+    conn.commit()
+    conn.close()
+    return "Nutritional info added successfully"
 
-    #scheduling weekly
-    scheduler = BackgroundScheduler()
-scheduler.start()
-scheduler.add_job(
-    func=distribute_food,
-    trigger=IntervalTrigger(weeks=1),
-    id='distribute_food_job',
-    name='Distribute food every week',
-    replace_existing=True)
-atexit.register(lambda: scheduler.shutdown())
-
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
-
